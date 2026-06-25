@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, Search, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, Download, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react';
 import api from '@/lib/api';
 import useStore from '@/store/useStore';
 import { getTranslation } from '@/lib/i18n';
 import FileTypeIcon from '@/components/UI/FileTypeIcon';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import BulkImport from '@/components/Admin/BulkImport';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
@@ -21,6 +22,7 @@ export default function AdminFileList() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [deleting, setDeleting] = useState(null);
+  const [showBulk, setShowBulk] = useState(false);
 
   const { data, isLoading } = useQuery(
     ['adminFiles', search, page],
@@ -56,11 +58,19 @@ export default function AdminFileList() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{t.files}</h1>
-        <Link href="/admin/files/new" className="btn-primary shrink-0">
-          <Plus className="w-4 h-4" />
-          {t.addFile}
-        </Link>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowBulk(true)} className="btn-secondary flex items-center gap-2">
+            <FileSpreadsheet className="w-4 h-4 text-green-600" />
+            {language === 'en' ? 'Import Excel' : 'Excel አስገባ'}
+          </button>
+          <Link href="/admin/files/new" className="btn-primary shrink-0">
+            <Plus className="w-4 h-4" />
+            {t.addFile}
+          </Link>
+        </div>
       </div>
+
+      {showBulk && <BulkImport onClose={() => setShowBulk(false)} />}
 
       {/* Search */}
       <div className="relative">
