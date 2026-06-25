@@ -46,7 +46,7 @@ export default function Navbar() {
                 {t.appName}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {language === 'en' ? 'Government of Ethiopia' : 'የኢትዮጵያ መንግሥት'}
+                {language === 'en' ? 'Lemi Kura Peace & Security Office' : 'ለሚ ኩራ ሰላምና ጸጥታ አ/ጽ/ቤት'}
               </p>
             </div>
           </Link>
