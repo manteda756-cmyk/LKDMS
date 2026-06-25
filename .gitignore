@@ -1,3 +1,6 @@
+# Kiro IDE
+.kiro/
+
 # Node
 node_modules/
 
