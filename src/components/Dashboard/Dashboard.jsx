@@ -81,10 +81,10 @@ export default function Dashboard() {
           </h1>
           <p className="text-primary-200 text-sm mb-6">
             {language === 'en'
-              ? 'Browse, search, and open government office files easily'
+              ? 'Lemi Kura Peace & Security Sub-city Office — Digital File Directory'
               : language === 'or'
-              ? 'Faayiloota waajjira mootummaa salphatti barbaadi fi bani'
-              : 'የመንግሥት ጽ/ቤት ፋይሎችን በቀላሉ ፈልጉ እና ክፈቱ'}
+              ? 'Waajjira Nagaa fi Nageenyaa Lemi Kura — Galmeessa Faayilii Dijitaalaa'
+              : 'ለሚ ኩራ ሰላምና ጸጥታ አ/ጽ/ቤት — ዲጅታል ፋይል ማውጫ'}
           </p>
           <SearchBar onSearch={handleSearch} size="lg" />
         </div>

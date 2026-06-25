@@ -15,7 +15,7 @@ export default function PublicLayout({ children }) {
             © {new Date().getFullYear()} · የፋይል ማውጫ ስርዓት · File Index System
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            የኢትዮጵያ መንግሥት · Government of Ethiopia
+            ለሚ ኩራ ሰላምና ጸጥታ አ/ጽ/ቤት · Lemi Kura Peace & Security Office
           </p>
         </div>
       </footer>
