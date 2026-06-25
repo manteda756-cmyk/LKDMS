@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS departments (
 -- Files table
 CREATE TABLE IF NOT EXISTS files (
   id             SERIAL PRIMARY KEY,
-  file_number    TEXT UNIQUE NOT NULL,
+  file_number    TEXT NOT NULL,
   title_am       TEXT NOT NULL,
   title_or       TEXT,
   title_en       TEXT,
@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS files (
   is_active      BOOLEAN DEFAULT true,
   view_count     INTEGER DEFAULT 0,
   download_count INTEGER DEFAULT 0,
-  created_by     INTEGER
+  created_by     INTEGER,
+  -- Duplicate = same file_number + same department (different depts can share numbers)
+  UNIQUE (file_number, department_id)
 );
 
 -- Users table
@@ -51,6 +53,11 @@ CREATE TABLE IF NOT EXISTS users (
   last_login    TIMESTAMPTZ,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
+
+-- ── IMPORTANT: If you already ran the schema, run this to fix the unique constraint:
+-- ALTER TABLE files DROP CONSTRAINT IF EXISTS files_file_number_key;
+-- ALTER TABLE files ADD CONSTRAINT files_file_number_dept_unique UNIQUE (file_number, department_id);
+-- This allows file number 001/2016 to exist in HR AND Finance simultaneously.
 
 -- ── Views ────────────────────────────────────────────────────
 

@@ -2,6 +2,28 @@ import { NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabaseServer';
 import { requireAdmin } from '@/lib/authHelper';
 
+// ── Duplicate check: same file_number + same department_id = duplicate
+// Different departments CAN have the same file_number — that is NOT a duplicate
+async function checkDuplicate(supabase, file_number, department_id, excludeId = null) {
+  let query = supabase
+    .from('files')
+    .select('id, title_am, departments(name_am)')
+    .eq('file_number', file_number.trim())
+    .eq('is_active', true);
+
+  // Match on department: if department_id is null, check other null-dept files
+  if (department_id) {
+    query = query.eq('department_id', parseInt(department_id));
+  } else {
+    query = query.is('department_id', null);
+  }
+
+  if (excludeId) query = query.neq('id', excludeId);
+
+  const { data } = await query.limit(1);
+  return data && data.length > 0 ? data[0] : null;
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -56,6 +78,18 @@ export async function POST(req) {
     }
 
     const supabase = getServiceClient();
+
+    // Check duplicate: same file_number AND same department
+    const duplicate = await checkDuplicate(supabase, file_number, department_id);
+    if (duplicate) {
+      const deptName = duplicate.departments?.name_am || 'ያልተመደበ';
+      return NextResponse.json({
+        success: false,
+        message: `ፋይል ቁጥር "${file_number}" በዚህ መምሪያ (${deptName}) አስቀድሞ ተመዝግቧል። ወደ ሌላ መምሪያ ለማስገባት መምሪያ ይምረጡ።`,
+        message_en: `File number "${file_number}" already exists in this department (${deptName}). The same number can be registered under a different department.`,
+      }, { status: 409 });
+    }
+
     let file_path = null, file_name = null, file_type = null, file_size = 0;
 
     if (fileObj && fileObj.size > 0) {
@@ -68,7 +102,6 @@ export async function POST(req) {
         .upload(storageKey, bytes, { contentType: fileObj.type, upsert: false });
 
       if (uploadErr) throw uploadErr;
-
       file_path = storageKey;
       file_name = fileObj.name;
       file_type = ext.toUpperCase();
@@ -78,7 +111,7 @@ export async function POST(req) {
     const { data, error } = await supabase
       .from('files')
       .insert({
-        file_number, title_am, title_or, title_en,
+        file_number: file_number.trim(), title_am, title_or, title_en,
         department_id: department_id ? parseInt(department_id) : null,
         description, file_path, file_name, file_type, file_size,
         created_by: auth.user.id,
@@ -86,10 +119,7 @@ export async function POST(req) {
       .select()
       .single();
 
-    if (error) {
-      if (error.code === '23505') return NextResponse.json({ success: false, message: 'File number already exists' }, { status: 409 });
-      throw error;
-    }
+    if (error) throw error;
     return NextResponse.json({ success: true, id: data.id, message: 'File created' }, { status: 201 });
   } catch (err) {
     console.error(err);

@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabaseServer';
 import { requireAdmin } from '@/lib/authHelper';
 
+async function checkDuplicate(supabase, file_number, department_id, excludeId = null) {
+  let query = supabase
+    .from('files')
+    .select('id, title_am, departments(name_am)')
+    .eq('file_number', file_number.trim())
+    .eq('is_active', true);
+
+  if (department_id) {
+    query = query.eq('department_id', parseInt(department_id));
+  } else {
+    query = query.is('department_id', null);
+  }
+  if (excludeId) query = query.neq('id', excludeId);
+
+  const { data } = await query.limit(1);
+  return data && data.length > 0 ? data[0] : null;
+}
+
 export async function GET(req, { params }) {
   try {
     const supabase = getServiceClient();
@@ -57,8 +75,21 @@ export async function PUT(req, { params }) {
     }
 
     const dept_id = formData.get('department_id');
+    const file_number = formData.get('file_number');
+
+    // Check duplicate: same file_number + same department, excluding current file
+    const duplicate = await checkDuplicate(supabase, file_number, dept_id, parseInt(params.id));
+    if (duplicate) {
+      const deptName = duplicate.departments?.name_am || 'ያልተመደበ';
+      return NextResponse.json({
+        success: false,
+        message: `ፋይል ቁጥር "${file_number}" በዚህ መምሪያ (${deptName}) አስቀድሞ ተመዝግቧል።`,
+        message_en: `File number "${file_number}" already exists in this department (${deptName}).`,
+      }, { status: 409 });
+    }
+
     const { error } = await supabase.from('files').update({
-      file_number: formData.get('file_number'),
+      file_number: file_number.trim(),
       title_am: formData.get('title_am'),
       title_or: formData.get('title_or') || null,
       title_en: formData.get('title_en') || null,

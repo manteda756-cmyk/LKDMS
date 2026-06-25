@@ -3,6 +3,25 @@ import { getServiceClient } from '@/lib/supabaseServer';
 import { requireAdmin } from '@/lib/authHelper';
 import * as XLSX from 'xlsx';
 
+// Duplicate = same file_number AND same department_id
+// Different departments with same file_number = ALLOWED
+async function isDuplicate(supabase, file_number, department_id) {
+  let query = supabase
+    .from('files')
+    .select('id')
+    .eq('file_number', file_number.trim())
+    .eq('is_active', true);
+
+  if (department_id) {
+    query = query.eq('department_id', parseInt(department_id));
+  } else {
+    query = query.is('department_id', null);
+  }
+
+  const { data } = await query.limit(1);
+  return data && data.length > 0;
+}
+
 export async function POST(req) {
   const auth = await requireAdmin(req);
   if (auth.error) return NextResponse.json({ success: false, message: auth.error }, { status: auth.status });
@@ -10,7 +29,7 @@ export async function POST(req) {
   try {
     const formData = await req.formData();
     const file = formData.get('file');
-    const department_id = formData.get('department_id') || null;
+    const default_department_id = formData.get('department_id') || null;
 
     if (!file) return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
 
@@ -23,32 +42,29 @@ export async function POST(req) {
       return NextResponse.json({ success: false, message: 'Excel file is empty' }, { status: 400 });
     }
 
-    // Normalize column names — support various header spellings
     const normalize = (row) => {
       const lower = {};
-      Object.keys(row).forEach(k => { lower[k.toLowerCase().trim().replace(/\s+/g,'_')] = row[k]; });
+      Object.keys(row).forEach(k => {
+        lower[k.toLowerCase().trim().replace(/\s+/g, '_')] = row[k];
+      });
 
       const fileNumber =
-        lower['file_number'] || lower['folder_number'] || lower['number'] ||
-        lower['የፋይል_ቁጥር'] || lower['ቁጥር'] || lower['no'] || lower['#'] || '';
+        String(lower['file_number'] || lower['folder_number'] || lower['number'] ||
+        lower['የፋይል_ቁጥር'] || lower['ቁጥር'] || lower['no'] || lower['#'] || '').trim();
 
       const titleAm =
-        lower['title_am'] || lower['amharic'] || lower['title'] ||
-        lower['የፋይል_ስም'] || lower['ስም'] || lower['name'] || lower['file_name'] || '';
+        String(lower['title_am'] || lower['amharic'] || lower['title'] ||
+        lower['የፋይል_ስም'] || lower['ስም'] || lower['name'] || lower['file_name'] || '').trim();
 
-      const titleEn =
-        lower['title_en'] || lower['english'] || lower['title_english'] || '';
+      const titleEn = String(lower['title_en'] || lower['english'] || '').trim();
+      const titleOr = String(lower['title_or'] || lower['oromo'] || '').trim();
+      const description = String(lower['description'] || lower['desc'] || lower['መግለጫ'] || '').trim();
 
-      const titleOr =
-        lower['title_or'] || lower['oromo'] || lower['title_oromo'] || '';
+      // Row-level department_id overrides the default if provided
+      const rowDeptId = lower['department_id'] || lower['dept_id'] || null;
+      const deptId = rowDeptId ? String(rowDeptId).trim() : default_department_id;
 
-      const description =
-        lower['description'] || lower['desc'] || lower['መግለጫ'] || '';
-
-      const deptId =
-        lower['department_id'] || lower['dept_id'] || lower['department'] || department_id || null;
-
-      return { fileNumber: String(fileNumber).trim(), titleAm: String(titleAm).trim(), titleEn: String(titleEn).trim(), titleOr: String(titleOr).trim(), description: String(description).trim(), deptId };
+      return { fileNumber, titleAm, titleEn, titleOr, description, deptId };
     };
 
     const supabase = getServiceClient();
@@ -58,8 +74,18 @@ export async function POST(req) {
       const { fileNumber, titleAm, titleEn, titleOr, description, deptId } = normalize(raw);
 
       if (!fileNumber || !titleAm) {
-        results.errors.push(`Row skipped — missing file number or Amharic title: ${JSON.stringify(raw)}`);
+        results.errors.push(`ሰናፍር ዝለለ — ቁጥር ወይም ስም የለም: ${JSON.stringify(raw)}`);
         results.skipped++;
+        continue;
+      }
+
+      // Check duplicate per department
+      const dup = await isDuplicate(supabase, fileNumber, deptId);
+      if (dup) {
+        results.skipped++;
+        results.errors.push(
+          `ዝለለ (ተደጋጋሚ): ፋይል ቁጥር "${fileNumber}" በዚህ መምሪያ አስቀድሞ አለ — ወደ ሌላ መምሪያ ያስገቡ።`
+        );
         continue;
       }
 
@@ -74,13 +100,8 @@ export async function POST(req) {
       });
 
       if (error) {
-        if (error.code === '23505') {
-          results.skipped++;
-          results.errors.push(`Skipped duplicate: ${fileNumber}`);
-        } else {
-          results.errors.push(`Error on ${fileNumber}: ${error.message}`);
-          results.skipped++;
-        }
+        results.skipped++;
+        results.errors.push(`ስህተት (${fileNumber}): ${error.message}`);
       } else {
         results.inserted++;
       }
@@ -91,7 +112,7 @@ export async function POST(req) {
       inserted: results.inserted,
       skipped: results.skipped,
       errors: results.errors,
-      message: `${results.inserted} files imported, ${results.skipped} skipped`,
+      message: `${results.inserted} ፋይሎች ገብተዋል፣ ${results.skipped} ዝለለ`,
     });
   } catch (err) {
     console.error(err);
