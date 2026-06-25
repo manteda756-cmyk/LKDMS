@@ -1,0 +1,14 @@
+{
+  "name": "ethiopia-file-index",
+  "version": "1.0.0",
+  "description": "Government File Index Management System",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node server/index.js",
+    "client": "cd client && npm run dev",
+    "install-all": "npm install && cd client && npm install"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
