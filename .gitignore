@@ -4,9 +4,15 @@
 # Node
 node_modules/
 
+# Next.js build output
+.next/
+out/
+
 # Environment variables
 .env
 .env.*.local
+
+# Keep .env.local (has Supabase keys for Vercel)
 
 # SQLite database
 server/data/
@@ -16,10 +22,6 @@ server/data/
 
 # Uploaded files
 server/uploads/
-
-# Next.js
-client/.next/
-client/out/
 
 # Vercel
 .vercel
