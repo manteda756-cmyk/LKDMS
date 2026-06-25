@@ -186,7 +186,7 @@ export default function FileForm({ fileId }) {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {language === 'en' ? 'Click to upload file' : 'ፋይል ለመጫን ጠቅ ያድርጉ'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">PDF, DOCX, XLSX, ZIP, Images · Max 50MB</p>
+                  <p className="text-xs text-gray-400 mt-1">PDF, DOCX, PPTX, XLSX, CSV, ZIP, RAR, Images · Max 50MB</p>
                   {isEdit && existing?.file_name && (
                     <p className="text-xs text-primary-500 mt-1">
                       {language === 'en' ? 'Current: ' : 'አሁን: '}{existing.file_name}
@@ -199,7 +199,7 @@ export default function FileForm({ fileId }) {
               ref={fileRef}
               type="file"
               className="hidden"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.jpg,.jpeg,.png,.gif,.webp"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.zip,.rar,.jpg,.jpeg,.png,.gif,.webp"
               onChange={(e) => setSelectedFile(e.target.files[0] || null)}
             />
           </div>
