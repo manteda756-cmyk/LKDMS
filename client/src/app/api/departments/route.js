@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabaseServer';
 import { requireAdmin } from '@/lib/authHelper';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const supabase = getServiceClient();
@@ -12,7 +15,12 @@ export async function GET() {
       .order('name_am');
 
     if (error) throw error;
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

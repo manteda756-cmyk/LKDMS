@@ -33,11 +33,23 @@ export default function Dashboard() {
   const router = useRouter();
 
   const { data: stats, isLoading } = useQuery('stats', () =>
-    api.get('/files/stats').then(r => r.data.data)
+    api.get('/files/stats').then(r => r.data.data),
+    {
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchInterval: 30000, // auto-refresh every 30 seconds
+    }
   );
 
   const { data: depts } = useQuery('departments', () =>
-    api.get('/departments').then(r => r.data.data)
+    api.get('/departments').then(r => r.data.data),
+    {
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchInterval: 30000,
+    }
   );
 
   const handleSearch = (q) => {

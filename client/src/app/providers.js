@@ -4,13 +4,22 @@ import { Toaster } from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import useStore from '@/store/useStore';
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
-});
-
 export function Providers({ children }) {
   const darkMode = useStore((s) => s.darkMode);
   const [mounted, setMounted] = useState(false);
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 1,
+            staleTime: 0,
+            refetchOnWindowFocus: true,
+            refetchOnMount: true,
+          },
+        },
+      })
+  );
 
   useEffect(() => {
     setMounted(true);
