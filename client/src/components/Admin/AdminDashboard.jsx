@@ -14,7 +14,8 @@ export default function AdminDashboard() {
   const t = getTranslation(language);
 
   const { data: stats, isLoading } = useQuery('adminStats', () =>
-    api.get('/files/stats').then(r => r.data.data)
+    api.get('/files/stats').then(r => r.data.data),
+    { staleTime: 0, refetchOnWindowFocus: true, refetchOnMount: true }
   );
 
   const getTitle = (file) => {
