@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import Link from 'next/link';
 import {
   ArrowLeft, Download, ExternalLink, Calendar, Hash, Building2,
-  Eye, FileText, Info
+  Eye, FileText, Info, Printer
 } from 'lucide-react';
 import api from '@/lib/api';
 import useStore from '@/store/useStore';
@@ -21,8 +21,17 @@ export default function FileDetail({ id }) {
     () => api.get(`/files/${id}`).then(r => r.data.data)
   );
 
+  const { data: stamps } = useQuery('stampSettings', () =>
+    api.get('/settings/stamps').then(r => r.data.data),
+    { staleTime: 5 * 60 * 1000 }
+  );
+
   const handleDownload = () => {
     window.open(`/api/files/${id}/download`, '_blank');
+  };
+
+  const handlePrint = () => {
+    window.open(`/files/${id}/print`, '_blank');
   };
 
   const getTitle = () => {
@@ -154,6 +163,14 @@ export default function FileDetail({ id }) {
                 {t.noFile}
               </div>
             )}
+            {/* Print with stamp button — always visible */}
+            <button
+              onClick={handlePrint}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              {language === 'en' ? 'Print Certificate' : language === 'or' ? 'Waraqaa Maxxansi' : 'ሰርተፊኬት አትም'}
+            </button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, FileText, Building2, Users, LogOut, Menu, X,
-  Moon, Sun, Globe, Shield, ChevronDown, Settings
+  Moon, Sun, Globe, Shield, ChevronDown, Settings, Stamp
 } from 'lucide-react';
 import useStore from '@/store/useStore';
 import { getTranslation } from '@/lib/i18n';
@@ -42,6 +42,7 @@ export default function AdminLayout({ children }) {
     { href: '/admin/files', label: t.files, icon: FileText },
     { href: '/admin/departments', label: t.departments, icon: Building2 },
     { href: '/admin/users', label: t.manageUsers, icon: Users },
+    { href: '/admin/stamps', label: language === 'en' ? 'Stamp & Signature' : 'ቴምብርና ፊርማ', icon: Stamp },
   ];
 
   const isActive = (item) => item.exact ? pathname === item.href : pathname.startsWith(item.href);

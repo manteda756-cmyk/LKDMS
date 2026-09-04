@@ -81,6 +81,13 @@ FROM departments d
 LEFT JOIN files f ON f.department_id = d.id AND f.is_active = true
 GROUP BY d.id;
 
+-- Settings table (stamp, signature, etc.)
+CREATE TABLE IF NOT EXISTS settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- ── Helper function for download counter ─────────────────────
 
 CREATE OR REPLACE FUNCTION increment_download(file_id INTEGER)
@@ -93,10 +100,13 @@ $$;
 ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE files       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings    ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can read active departments and files
 CREATE POLICY "Public read departments" ON departments FOR SELECT USING (is_active = true);
 CREATE POLICY "Public read files"       ON files       FOR SELECT USING (is_active = true);
+-- Settings readable by all (stamp/signature URLs needed for public print view)
+CREATE POLICY "Public read settings"    ON settings    FOR SELECT USING (true);
 
 -- Service role bypasses RLS (used by API routes with service key)
 
